@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Data - IBKR Historical Data Downloader</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/static/style.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-chart-line me-2"></i>
+                IBKR Historical Data Downloader
+            </a>
+            <div class="navbar-nav">
+                <div class="nav-item">
+                    <span id="connection-status" class="badge bg-secondary">
+                        <i class="fas fa-circle me-1"></i>Disconnected
+                    </span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <!-- Controls Sidebar -->
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-newspaper me-2"></i>News Request
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="news-form">
+                            <div class="mb-3">
+                                <label for="news-symbol" class="form-label">Symbol *</label>
+                                <input type="text" class="form-control" id="news-symbol" placeholder="e.g., AAPL" required>
+                                <small class="form-text text-muted">Major symbols: AAPL, GOOGL, MSFT, TSLA, AMZN</small>
+                            </div>
+                            <div class="mb-3">
+                                <label for="news-con-id" class="form-label">Contract ID (Optional)</label>
+                                <input type="number" class="form-control" id="news-con-id" placeholder="e.g., 265598">
+                                <small class="form-text text-muted">Leave blank to auto-resolve</small>
+                            </div>
+                            <div class="mb-3">
+                                <label for="news-providers" class="form-label">News Providers</label>
+                                <select class="form-select" id="news-providers" multiple>
+                                    <option value="">All Providers</option>
+                                </select>
+                                <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple</small>
+                            </div>
+                            <div class="mb-3">
+                                <label for="news-start-date" class="form-label">Start Date</label>
+                                <input type="datetime-local" class="form-control" id="news-start-date">
+                            </div>
+                            <div class="mb-3">
+                                <label for="news-end-date" class="form-label">End Date</label>
+                                <input type="datetime-local" class="form-control" id="news-end-date">
+                            </div>
+                            <div class="mb-3">
+                                <label for="news-total-results" class="form-label">Max Results</label>
+                                <input type="number" class="form-control" id="news-total-results" value="10" min="1" max="100">
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100" id="request-news-btn">
+                                <i class="fas fa-search me-2"></i>Get News
+                            </button>
+                        </form>
+                        
+                        <button class="btn btn-info w-100 mt-2" onclick="loadNewsProviders()">
+                            <i class="fas fa-sync-alt me-2"></i>Load Providers
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-search me-2"></i>Search News
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="search-keyword" placeholder="Enter keyword">
+                            <button class="btn btn-outline-secondary" onclick="searchNews()">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                        <div id="search-results" class="mt-3" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9">
+                <!-- News Summary -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i>News Summary
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row" id="news-summary">
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h4 class="text-primary" id="total-news">--</h4>
+                                    <small class="text-muted">Total Headlines</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h4 class="text-success" id="news-providers-count">--</h4>
+                                    <small class="text-muted">News Providers</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h4 class="text-info" id="news-date-range">--</h4>
+                                    <small class="text-muted">Date Range</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h4 class="text-warning" id="last-updated">--</h4>
+                                    <small class="text-muted">Last Updated</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- News Headlines -->
+                <div class="card mt-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-list me-2"></i>News Headlines
+                        </h5>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="showNewsCharts()">
+                                <i class="fas fa-chart-bar me-1"></i>Charts
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-success" onclick="exportNews()">
+                                <i class="fas fa-download me-1"></i>Export
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="news-headlines">
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-newspaper fa-3x mb-3"></i>
+                                <p>No news data available. Request news for a symbol to get started.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- News Charts -->
+                <div class="row mt-3" id="news-charts" style="display: none;">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-chart-pie me-2"></i>Provider Distribution
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="provider-chart" height="300"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-chart-bar me-2"></i>Time Distribution
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="time-chart" height="300"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sentiment Analysis -->
+                <div class="card mt-3" id="sentiment-analysis" style="display: none;">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-smile me-2"></i>Sentiment Analysis
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <canvas id="sentiment-chart" height="300"></canvas>
+                            </div>
+                            <div class="col-md-8">
+                                <div id="sentiment-breakdown"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="toast" class="toast" role="alert">
+            <div class="toast-header">
+                <i id="toast-icon" class="fas fa-info-circle me-2"></i>
+                <strong id="toast-title" class="me-auto">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="toast-body">
+                Message content
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/static/app.js"></script>
+    <script src="/static/news.js"></script>
+</body>
+</html>

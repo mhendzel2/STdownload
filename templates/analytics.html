@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics - IBKR Historical Data Downloader</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/static/style.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-chart-line me-2"></i>
+                IBKR Historical Data Downloader
+            </a>
+            <div class="navbar-nav">
+                <div class="nav-item">
+                    <span id="connection-status" class="badge bg-secondary">
+                        <i class="fas fa-circle me-1"></i>Disconnected
+                    </span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <!-- Controls Sidebar -->
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-area me-2"></i>Analytics Controls
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="analytics-symbol" class="form-label">Select Symbol</label>
+                            <select class="form-select" id="analytics-symbol">
+                                <option value="">Choose a symbol...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="chart-type" class="form-label">Chart Type</label>
+                            <select class="form-select" id="chart-type">
+                                <option value="line">Line Chart</option>
+                                <option value="candlestick">Candlestick</option>
+                                <option value="area">Area Chart</option>
+                                <option value="volume">Volume Chart</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="time-range" class="form-label">Time Range</label>
+                            <select class="form-select" id="time-range">
+                                <option value="1m">1 Minute</option>
+                                <option value="5m">5 Minutes</option>
+                                <option value="15m">15 Minutes</option>
+                                <option value="1h">1 Hour</option>
+                                <option value="all" selected>All Data</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary w-100" onclick="updateAnalytics()">
+                            <i class="fas fa-sync-alt me-2"></i>Update Charts
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Technical Indicators -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-calculator me-2"></i>Technical Indicators
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="show-ma" checked>
+                            <label class="form-check-label" for="show-ma">
+                                Moving Averages
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="show-volume">
+                            <label class="form-check-label" for="show-volume">
+                                Volume
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="show-volatility">
+                            <label class="form-check-label" for="show-volatility">
+                                Volatility
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="show-support-resistance">
+                            <label class="form-check-label" for="show-support-resistance">
+                                Support/Resistance
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9">
+                <!-- Analytics Summary -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Analytics Summary
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row" id="analytics-summary">
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h4 class="text-primary" id="current-price">--</h4>
+                                    <small class="text-muted">Current Price</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h4 class="text-success" id="price-change">--</h4>
+                                    <small class="text-muted">Price Change</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h4 class="text-info" id="volatility">--</h4>
+                                    <small class="text-muted">Volatility</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h4 class="text-warning" id="volume">--</h4>
+                                    <small class="text-muted">Volume</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Price Chart -->
+                <div class="card mt-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-line me-2"></i>Price Analysis
+                        </h5>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="exportChart('price')">
+                                <i class="fas fa-download me-1"></i>Export
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-success" onclick="fullScreenChart('price')">
+                                <i class="fas fa-expand me-1"></i>Fullscreen
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="price-analysis-chart" height="400"></canvas>
+                    </div>
+                </div>
+
+                <!-- Volume Chart -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-bar me-2"></i>Volume Analysis
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="volume-analysis-chart" height="300"></canvas>
+                    </div>
+                </div>
+
+                <!-- Moving Averages -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-area me-2"></i>Moving Averages
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Period</th>
+                                        <th>Value</th>
+                                        <th>vs Current</th>
+                                        <th>Signal</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ma-table">
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted">No data available</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Market Statistics -->
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-calculator me-2"></i>Market Statistics
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <td><strong>High:</strong></td>
+                                        <td id="stat-high">--</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Low:</strong></td>
+                                        <td id="stat-low">--</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Range:</strong></td>
+                                        <td id="stat-range">--</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Avg Price:</strong></td>
+                                        <td id="stat-avg">--</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Data Points:</strong></td>
+                                        <td id="stat-points">--</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-signal me-2"></i>Technical Signals
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="technical-signals">
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Select a symbol to view technical signals
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart Modal -->
+    <div class="modal fade" id="chartModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Full Screen Chart</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <canvas id="fullscreen-chart" height="600"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="toast" class="toast" role="alert">
+            <div class="toast-header">
+                <i id="toast-icon" class="fas fa-info-circle me-2"></i>
+                <strong id="toast-title" class="me-auto">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="toast-body">
+                Message content
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/static/app.js"></script>
+    <script src="/static/analytics.js"></script>
+</body>
+</html>

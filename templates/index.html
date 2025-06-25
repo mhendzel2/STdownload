@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IBKR Historical Data Downloader</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/static/style.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">
+                <i class="fas fa-chart-line me-2"></i>
+                IBKR Historical Data Downloader
+            </span>
+            <div class="navbar-nav">
+                <div class="nav-item">
+                    <span id="connection-status" class="badge bg-secondary">
+                        <i class="fas fa-circle me-1"></i>Disconnected
+                    </span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-plug me-2"></i>Connection
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="connection-form">
+                            <div class="mb-3">
+                                <label for="host" class="form-label">Host</label>
+                                <input type="text" class="form-control" id="host" value="127.0.0.1">
+                            </div>
+                            <div class="mb-3">
+                                <label for="port" class="form-label">Port</label>
+                                <input type="number" class="form-control" id="port" value="7497">
+                                <small class="form-text text-muted">7497 for demo, 7496 for live</small>
+                            </div>
+                            <div class="mb-3">
+                                <label for="client-id" class="form-label">Client ID</label>
+                                <input type="number" class="form-control" id="client-id" value="1">
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100" id="connect-btn">
+                                <i class="fas fa-plug me-2"></i>Connect
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Quick Start
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <ol class="list-unstyled">
+                            <li class="mb-2">
+                                <span class="badge bg-primary me-2">1</span>
+                                Start TWS or Gateway
+                            </li>
+                            <li class="mb-2">
+                                <span class="badge bg-primary me-2">2</span>
+                                Connect to IBKR API
+                            </li>
+                            <li class="mb-2">
+                                <span class="badge bg-primary me-2">3</span>
+                                Go to Download page
+                            </li>
+                            <li class="mb-2">
+                                <span class="badge bg-primary me-2">4</span>
+                                Enter symbols and download
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-home me-2"></i>Welcome
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <h2>IBKR Historical Data Downloader</h2>
+                        <p class="lead">Download historical financial data from Interactive Brokers with robust error handling and multiple export formats.</p>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-4">
+                                <div class="card border-primary">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-download fa-3x text-primary mb-3"></i>
+                                        <h5>Download Data</h5>
+                                        <p>Download historical data for stocks, forex, futures, and options</p>
+                                        <a href="/download" class="btn btn-primary">
+                                            <i class="fas fa-arrow-right me-2"></i>Go to Download
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-warning">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-broadcast-tower fa-3x text-warning mb-3"></i>
+                                        <h5>Real-Time Streaming</h5>
+                                        <p>Stream live market data with real-time analytics and alerts</p>
+                                        <a href="/streaming" class="btn btn-warning">
+                                            <i class="fas fa-play me-2"></i>Start Streaming
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-info">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-chart-area fa-3x text-info mb-3"></i>
+                                        <h5>Advanced Analytics</h5>
+                                        <p>Visualize data with charts, technical indicators, and analysis</p>
+                                        <a href="/analytics" class="btn btn-info">
+                                            <i class="fas fa-chart-line me-2"></i>View Analytics
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-md-4">
+                                <div class="card border-dark">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-newspaper fa-3x text-dark mb-3"></i>
+                                        <h5>News Data</h5>
+                                        <p>Get historical news headlines with sentiment analysis</p>
+                                        <a href="/news" class="btn btn-dark">
+                                            <i class="fas fa-newspaper me-2"></i>View News
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                            <div class="col-md-4">
+                                <div class="card border-success">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-file-alt fa-3x text-success mb-3"></i>
+                                        <h5>File Manager</h5>
+                                        <p>View and download your saved data files</p>
+                                        <button class="btn btn-success" onclick="showFiles()">
+                                            <i class="fas fa-folder-open me-2"></i>View Files
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-secondary">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-cogs fa-3x text-secondary mb-3"></i>
+                                        <h5>API Documentation</h5>
+                                        <p>Complete API reference for programmatic access</p>
+                                        <button class="btn btn-secondary" onclick="showApiDocs()">
+                                            <i class="fas fa-book me-2"></i>View API Docs
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <h4>Features</h4>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <ul class="list-unstyled">
+                                            <li><i class="fas fa-check text-success me-2"></i>Multiple asset types</li>
+                                            <li><i class="fas fa-check text-success me-2"></i>Various timeframes</li>
+                                            <li><i class="fas fa-check text-success me-2"></i>Bulk downloads</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <ul class="list-unstyled">
+                                            <li><i class="fas fa-check text-success me-2"></i>CSV and Excel export</li>
+                                            <li><i class="fas fa-check text-success me-2"></i>Robust error handling</li>
+                                            <li><i class="fas fa-check text-success me-2"></i>Progress tracking</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <ul class="list-unstyled">
+                                            <li><i class="fas fa-check text-success me-2"></i>Connection management</li>
+                                            <li><i class="fas fa-check text-success me-2"></i>Rate limiting</li>
+                                            <li><i class="fas fa-check text-success me-2"></i>Comprehensive logging</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Files Modal -->
+                <div class="modal fade" id="filesModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-folder-open me-2"></i>Data Files
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div id="files-loading" class="text-center">
+                                    <div class="spinner-border" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                                <div id="files-list" style="display: none;">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Filename</th>
+                                                <th>Size</th>
+                                                <th>Modified</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="files-tbody">
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div id="files-empty" style="display: none;" class="text-center text-muted">
+                                    <i class="fas fa-folder-open fa-3x mb-3"></i>
+                                    <p>No data files found. Download some data first!</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/app.js"></script>
+</body>
+</html>
